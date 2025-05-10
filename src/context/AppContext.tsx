@@ -62,6 +62,8 @@ const defaultIconSetParameters: IconSetParameters = {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
+const USE_WEBHOOK = import.meta.env.VITE_USE_WEBHOOK === 'true';
+
 export function AppProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKey] = useState<string>(() => {
     const savedKey = localStorage.getItem('openai_api_key');
@@ -90,7 +92,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateCardImage = async () => {
-    if (!apiKey) {
+    if (!USE_WEBHOOK && !apiKey) {
       setError('Please set your OpenAI API key in settings');
       return;
     }
@@ -102,7 +104,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const imageUrl = await generateImage(apiKey, cardParameters);
       setGeneratedImage(imageUrl);
       
-      // Add to history
       setGenerationHistory(prev => [
         {
           type: 'trading-card',
@@ -110,7 +111,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           imageUrl,
           timestamp: Date.now(),
         },
-        ...prev.slice(0, 9), // Keep only the last 10 items
+        ...prev.slice(0, 9),
       ]);
       
     } catch (err) {
@@ -121,7 +122,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateBRollImageHandler = async () => {
-    if (!apiKey) {
+    if (!USE_WEBHOOK && !apiKey) {
       setError('Please set your OpenAI API key in settings');
       return;
     }
@@ -133,7 +134,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const imageUrl = await generateBRollImage(apiKey, bRollParameters);
       setGeneratedImage(imageUrl);
       
-      // Add to history
       setGenerationHistory(prev => [
         {
           type: 'b-roll',
@@ -141,7 +141,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           imageUrl,
           timestamp: Date.now(),
         },
-        ...prev.slice(0, 9), // Keep only the last 10 items
+        ...prev.slice(0, 9),
       ]);
       
     } catch (err) {
@@ -152,7 +152,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   
   const generateIconSetImageHandler = async () => {
-    if (!apiKey) {
+    if (!USE_WEBHOOK && !apiKey) {
       setError('Please set your OpenAI API key in settings');
       return;
     }
@@ -164,7 +164,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const imageUrl = await generateIconSetImage(apiKey, iconSetParameters);
       setGeneratedImage(imageUrl);
       
-      // Add to history
       setGenerationHistory(prev => [
         {
           type: 'icon-set',
@@ -172,7 +171,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           imageUrl,
           timestamp: Date.now(),
         },
-        ...prev.slice(0, 9), // Keep only the last 10 items
+        ...prev.slice(0, 9),
       ]);
       
     } catch (err) {
@@ -182,14 +181,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Save API key to localStorage when it changes
   React.useEffect(() => {
     if (apiKey) {
       localStorage.setItem('openai_api_key', apiKey);
     }
   }, [apiKey]);
 
-  // Reset generated image when switching generators
   React.useEffect(() => {
     setGeneratedImage(null);
     setError(null);
