@@ -1,64 +1,19 @@
 import { CardParameters, BRollParameters, IconSetParameters } from '../types';
 
+const USE_WEBHOOK = import.meta.env.VITE_USE_WEBHOOK === 'true';
+const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
+const OPENAI_API_ENDPOINT = import.meta.env.VITE_OPENAI_API_ENDPOINT;
+
 export async function generateImage(
   apiKey: string, 
   parameters: CardParameters
 ): Promise<string> {
   try {
-    // Construct the prompt by replacing variables
-    const prompt = buildPrompt(parameters);
-    
-    // Make request to OpenAI API
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
+    if (USE_WEBHOOK) {
+      return await generateImageViaWebhook('tradingcard', parameters);
+    } else {
+      return await generateImageViaOpenAI(apiKey, buildPrompt(parameters));
     }
-    
-    const data = await response.json();
-    
-    // Log the full response for debugging
-    console.log('OpenAI API Response:', JSON.stringify(data, null, 2));
-    
-    // Check if data exists and has the expected structure
-    if (!data) {
-      throw new Error('Empty response from OpenAI API');
-    }
-    
-    // Handle different response formats from OpenAI API
-    let imageUrl = null;
-    
-    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-      if (data.data[0].url) {
-        imageUrl = data.data[0].url;
-      } else if (data.data[0].b64_json) {
-        // Some API versions return base64 encoded images
-        imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
-      }
-    } else if (data.url) {
-      // Handle case where URL might be directly in the data object
-      imageUrl = data.url;
-    }
-    
-    if (!imageUrl) {
-      console.error('Unable to find image URL in response:', data);
-      throw new Error('No image URL found in API response');
-    }
-    
-    return imageUrl;
   } catch (error) {
     console.error('Error generating image:', error);
     throw error;
@@ -70,60 +25,11 @@ export async function generateBRollImage(
   parameters: BRollParameters
 ): Promise<string> {
   try {
-    // Construct the prompt by replacing variables
-    const prompt = buildBRollPrompt(parameters);
-    
-    // Make request to OpenAI API
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
+    if (USE_WEBHOOK) {
+      return await generateImageViaWebhook('broll', parameters);
+    } else {
+      return await generateImageViaOpenAI(apiKey, buildBRollPrompt(parameters));
     }
-    
-    const data = await response.json();
-    
-    // Log the full response for debugging
-    console.log('OpenAI API Response:', JSON.stringify(data, null, 2));
-    
-    // Check if data exists and has the expected structure
-    if (!data) {
-      throw new Error('Empty response from OpenAI API');
-    }
-    
-    // Handle different response formats from OpenAI API
-    let imageUrl = null;
-    
-    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-      if (data.data[0].url) {
-        imageUrl = data.data[0].url;
-      } else if (data.data[0].b64_json) {
-        // Some API versions return base64 encoded images
-        imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
-      }
-    } else if (data.url) {
-      // Handle case where URL might be directly in the data object
-      imageUrl = data.url;
-    }
-    
-    if (!imageUrl) {
-      console.error('Unable to find image URL in response:', data);
-      throw new Error('No image URL found in API response');
-    }
-    
-    return imageUrl;
   } catch (error) {
     console.error('Error generating image:', error);
     throw error;
@@ -135,68 +41,103 @@ export async function generateIconSetImage(
   parameters: IconSetParameters
 ): Promise<string> {
   try {
-    // Construct the prompt by replacing variables
-    const prompt = buildIconSetPrompt(parameters);
-    
-    // Make request to OpenAI API
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: "gpt-image-1",
-        prompt,
-        n: 1,
-        size: "1024x1024",
-      }),
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
+    if (USE_WEBHOOK) {
+      return await generateImageViaWebhook('iconset', parameters);
+    } else {
+      return await generateImageViaOpenAI(apiKey, buildIconSetPrompt(parameters));
     }
-    
-    const data = await response.json();
-    
-    // Log the full response for debugging
-    console.log('OpenAI API Response:', JSON.stringify(data, null, 2));
-    
-    // Check if data exists and has the expected structure
-    if (!data) {
-      throw new Error('Empty response from OpenAI API');
-    }
-    
-    // Handle different response formats from OpenAI API
-    let imageUrl = null;
-    
-    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-      if (data.data[0].url) {
-        imageUrl = data.data[0].url;
-      } else if (data.data[0].b64_json) {
-        // Some API versions return base64 encoded images
-        imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
-      }
-    } else if (data.url) {
-      // Handle case where URL might be directly in the data object
-      imageUrl = data.url;
-    }
-    
-    if (!imageUrl) {
-      console.error('Unable to find image URL in response:', data);
-      throw new Error('No image URL found in API response');
-    }
-    
-    return imageUrl;
   } catch (error) {
     console.error('Error generating image:', error);
     throw error;
   }
 }
 
+async function generateImageViaWebhook(type: string, parameters: any): Promise<string> {
+  if (!WEBHOOK_URL) {
+    throw new Error('Webhook URL not configured');
+  }
+
+  const colorsString = Array.isArray(parameters.colors) 
+    ? parameters.colors.join(' to ') 
+    : 'blue to purple';
+
+  const response = await fetch(WEBHOOK_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      type,
+      parameters,
+      colorsString,
+      openai_image_model: "gpt-image-1",
+      number_of_images: 1,
+      size_of_image: "1024x1024",
+      quality_of_image: "high"
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  
+  if (!data || !data.url) {
+    throw new Error('No image URL found in webhook response');
+  }
+
+  return data.url;
+}
+
+async function generateImageViaOpenAI(apiKey: string, prompt: string): Promise<string> {
+  const response = await fetch(OPENAI_API_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: "gpt-image-1",
+      prompt,
+      n: 1,
+      size: "1024x1024",
+    }),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+
+  if (!data) {
+    throw new Error('Empty response from OpenAI API');
+  }
+
+  let imageUrl = null;
+
+  if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+    if (data.data[0].url) {
+      imageUrl = data.data[0].url;
+    } else if (data.data[0].b64_json) {
+      imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
+    }
+  } else if (data.url) {
+    imageUrl = data.url;
+  }
+
+  if (!imageUrl) {
+    console.error('Unable to find image URL in response:', data);
+    throw new Error('No image URL found in API response');
+  }
+
+  return imageUrl;
+}
+
 function buildPrompt(parameters: CardParameters): string {
-  // Convert colors array to string format
   const colorsString = parameters.colors.join(', ');
   
   return `A futuristic trading card with a dark, moody neon aesthetic and soft sci-fi lighting. The card features a semi-transparent, rounded rectangle with slightly muted glowing edges, appearing as if made of holographic glass. The surface has subtle reflections and a faint gloss, with light motion blur applied to edges and highlights to create a sense of energy and depth. At the center is a large glowing logo of ${parameters.logo}, rendered with a smooth gradient of ${colorsString}—visibly radiant but not overpoweringly bright.
