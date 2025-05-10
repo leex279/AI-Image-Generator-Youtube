@@ -84,10 +84,16 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
 
   const data = await response.json();
   
-  if (!data || !data.url) {
-    throw new Error('No image URL found in webhook response');
+  if (!data || (!data[0]?.b64_json && !data.url)) {
+    throw new Error('No image data found in webhook response');
   }
 
+  // Handle base64 response
+  if (data[0]?.b64_json) {
+    return `data:image/png;base64,${data[0].b64_json}`;
+  }
+
+  // Handle URL response
   return data.url;
 }
 
