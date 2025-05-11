@@ -139,7 +139,7 @@ If you find this project helpful, consider:
 1. Subscribing to [DIY SmartCode](https://www.youtube.com/@DIYSmartCode) for more content
 2. Supporting the channel via [Buy Me a Coffee](https://buymeacoffee.com/diy_smartcode)
 3. Sharing the project with others
-4. Opening issues or submitting pull requests
+
 
 ## License
 
