@@ -6,6 +6,19 @@ A powerful and versatile AI image generation tool built with React and TypeScrip
 - B-Roll: Create professional B-roll footage for video content
 - Icon Sets: Design cohesive icon sets with various styles and themes
 
+## ⚠️ Educational Project Disclaimer
+
+This project is created for educational purposes and built with the assistance of AI technology. It serves as a learning resource and demonstration of modern web development techniques and AI integration. While functional, it should be used primarily for learning and experimentation.
+
+## 📺 DIY SmartCode YouTube Channel
+
+This project is part of the educational content created for the DIY SmartCode YouTube channel. For more tutorials, projects, and tech content:
+
+- YouTube: [DIY SmartCode](https://www.youtube.com/@DIYSmartCode)
+- Support the Channel: [Buy Me a Coffee](https://buymeacoffee.com/diy_smartcode)
+
+By supporting the channel, you help create more educational content and open-source projects like this one!
+
 ## Features
 
 ### Trading Card Generator
@@ -119,6 +132,14 @@ npm run build
 ```bash
 npm run preview
 ```
+
+## Contributing
+
+If you find this project helpful, consider:
+1. Subscribing to [DIY SmartCode](https://www.youtube.com/@DIYSmartCode) for more content
+2. Supporting the channel via [Buy Me a Coffee](https://buymeacoffee.com/diy_smartcode)
+3. Sharing the project with others
+4. Opening issues or submitting pull requests
 
 ## License
 
