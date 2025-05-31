@@ -17,7 +17,7 @@ export async function generateImage(
   } catch (error) {
     console.error('Error generating image:', error);
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Unable to connect to the image generation service. This might be due to CORS restrictions or the service being unavailable. Please ensure the webhook URL is correct and accessible.');
+      throw new Error('Unable to connect to the image generation service. Please check your internet connection and try again.');
     }
     throw error;
   }
@@ -36,7 +36,7 @@ export async function generateBRollImage(
   } catch (error) {
     console.error('Error generating B-Roll image:', error);
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Unable to connect to the image generation service. This might be due to CORS restrictions or the service being unavailable. Please ensure the webhook URL is correct and accessible.');
+      throw new Error('Unable to connect to the image generation service. Please check your internet connection and try again.');
     }
     throw error;
   }
@@ -55,7 +55,7 @@ export async function generateIconSetImage(
   } catch (error) {
     console.error('Error generating icon set:', error);
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Unable to connect to the image generation service. This might be due to CORS restrictions or the service being unavailable. Please ensure the webhook URL is correct and accessible.');
+      throw new Error('Unable to connect to the image generation service. Please check your internet connection and try again.');
     }
     throw error;
   }
@@ -75,6 +75,7 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({
         type,
@@ -109,8 +110,9 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
     // Handle URL response
     return data.url;
   } catch (error) {
+    console.error('Webhook error:', error);
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('CORS Error: Unable to access the webhook endpoint. Please ensure the webhook URL allows requests from this domain.');
+      throw new Error('Network Error: Unable to connect to the webhook. Please check your internet connection.');
     }
     throw error;
   }
