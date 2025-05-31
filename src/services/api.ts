@@ -16,6 +16,9 @@ export async function generateImage(
     }
   } catch (error) {
     console.error('Error generating image:', error);
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to the image generation service. This might be due to CORS restrictions or the service being unavailable. Please ensure the webhook URL is correct and accessible.');
+    }
     throw error;
   }
 }
@@ -31,7 +34,10 @@ export async function generateBRollImage(
       return await generateImageViaOpenAI(apiKey, buildBRollPrompt(parameters));
     }
   } catch (error) {
-    console.error('Error generating image:', error);
+    console.error('Error generating B-Roll image:', error);
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to the image generation service. This might be due to CORS restrictions or the service being unavailable. Please ensure the webhook URL is correct and accessible.');
+    }
     throw error;
   }
 }
@@ -47,100 +53,123 @@ export async function generateIconSetImage(
       return await generateImageViaOpenAI(apiKey, buildIconSetPrompt(parameters));
     }
   } catch (error) {
-    console.error('Error generating image:', error);
+    console.error('Error generating icon set:', error);
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Unable to connect to the image generation service. This might be due to CORS restrictions or the service being unavailable. Please ensure the webhook URL is correct and accessible.');
+    }
     throw error;
   }
 }
 
 async function generateImageViaWebhook(type: string, parameters: any): Promise<string> {
   if (!WEBHOOK_URL) {
-    throw new Error('Webhook URL not configured');
+    throw new Error('Webhook URL not configured. Please check your environment variables.');
   }
 
   const colorsString = Array.isArray(parameters.colors) 
     ? parameters.colors.join(' to ') 
     : 'blue to purple';
 
-  const response = await fetch(WEBHOOK_URL, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      type,
-      parameters,
-      colorsString,
-      openai_image_model: "gpt-image-1",
-      number_of_images: 1,
-      size_of_image: "1024x1024",
-      quality_of_image: "high"
-    }),
-  });
+  try {
+    const response = await fetch(WEBHOOK_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type,
+        parameters,
+        colorsString,
+        openai_image_model: "gpt-image-1",
+        number_of_images: 1,
+        size_of_image: "1024x1024",
+        quality_of_image: "high"
+      }),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || 
+        `Failed to generate image: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const data = await response.json();
+    
+    if (!data || (!data[0]?.b64_json && !data.url)) {
+      throw new Error('No image data found in webhook response');
+    }
+
+    // Handle base64 response
+    if (data[0]?.b64_json) {
+      return `data:image/png;base64,${data[0].b64_json}`;
+    }
+
+    // Handle URL response
+    return data.url;
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('CORS Error: Unable to access the webhook endpoint. Please ensure the webhook URL allows requests from this domain.');
+    }
+    throw error;
   }
-
-  const data = await response.json();
-  
-  if (!data || (!data[0]?.b64_json && !data.url)) {
-    throw new Error('No image data found in webhook response');
-  }
-
-  // Handle base64 response
-  if (data[0]?.b64_json) {
-    return `data:image/png;base64,${data[0].b64_json}`;
-  }
-
-  // Handle URL response
-  return data.url;
 }
 
 async function generateImageViaOpenAI(apiKey: string, prompt: string): Promise<string> {
-  const response = await fetch(OPENAI_API_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: "gpt-image-1",
-      prompt,
-      n: 1,
-      size: "1024x1024",
-    }),
-  });
+  try {
+    const response = await fetch(OPENAI_API_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt,
+        n: 1,
+        size: "1024x1024",
+      }),
+    });
 
-  if (!response.ok) {
-    const errorData = await response.json();
-    throw new Error(errorData.error?.message || `Failed to generate image: ${response.status} ${response.statusText}`);
-  }
-
-  const data = await response.json();
-
-  if (!data) {
-    throw new Error('Empty response from OpenAI API');
-  }
-
-  let imageUrl = null;
-
-  if (data.data && Array.isArray(data.data) && data.data.length > 0) {
-    if (data.data[0].url) {
-      imageUrl = data.data[0].url;
-    } else if (data.data[0].b64_json) {
-      imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error?.message || 
+        `Failed to generate image: ${response.status} ${response.statusText}`
+      );
     }
-  } else if (data.url) {
-    imageUrl = data.url;
-  }
 
-  if (!imageUrl) {
-    console.error('Unable to find image URL in response:', data);
-    throw new Error('No image URL found in API response');
-  }
+    const data = await response.json();
 
-  return imageUrl;
+    if (!data) {
+      throw new Error('Empty response from OpenAI API');
+    }
+
+    let imageUrl = null;
+
+    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+      if (data.data[0].url) {
+        imageUrl = data.data[0].url;
+      } else if (data.data[0].b64_json) {
+        imageUrl = `data:image/png;base64,${data.data[0].b64_json}`;
+      }
+    } else if (data.url) {
+      imageUrl = data.url;
+    }
+
+    if (!imageUrl) {
+      console.error('Unable to find image URL in response:', data);
+      throw new Error('No image URL found in API response');
+    }
+
+    return imageUrl;
+  } catch (error) {
+    if (error instanceof TypeError && error.message === 'Failed to fetch') {
+      throw new Error('Network Error: Unable to connect to the OpenAI API. Please check your internet connection.');
+    }
+    throw error;
+  }
 }
 
 function buildPrompt(parameters: CardParameters): string {
