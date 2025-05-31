@@ -71,12 +71,32 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
     : 'blue to purple';
 
   try {
+    // First, send a preflight request
+    const preflightResponse = await fetch(WEBHOOK_URL, {
+      method: 'OPTIONS',
+      headers: {
+        'Origin': window.location.origin,
+        'Access-Control-Request-Method': 'POST',
+        'Access-Control-Request-Headers': 'Content-Type',
+      },
+      mode: 'cors',
+      credentials: 'include',
+    });
+
+    if (!preflightResponse.ok) {
+      console.warn('Preflight request failed:', preflightResponse.status);
+    }
+
+    // Then send the actual request
     const response = await fetch(WEBHOOK_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
+        'Origin': window.location.origin,
       },
+      mode: 'cors',
+      credentials: 'include',
       body: JSON.stringify({
         type,
         parameters,
@@ -112,7 +132,7 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
   } catch (error) {
     console.error('Webhook error:', error);
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Network Error: Unable to connect to the webhook. Please check your internet connection.');
+      throw new Error('Network Error: Unable to connect to the webhook. Please check your internet connection and CORS configuration.');
     }
     throw error;
   }
