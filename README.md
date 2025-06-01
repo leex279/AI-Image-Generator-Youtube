@@ -6,6 +6,8 @@ A powerful and versatile AI image generation tool built with React and TypeScrip
 - B-Roll: Create professional B-roll footage for video content
 - Icon Sets: Design cohesive icon sets with various styles and themes
 
+![AI Image Generator Preview](public/ai-image-generator.png)
+
 ## ⚠️ Educational Project Disclaimer
 
 This project is created for educational purposes and built with the assistance of AI technology. It serves as a learning resource and demonstration of modern web development techniques and AI integration. While functional, it should be used primarily for learning and experimentation.
