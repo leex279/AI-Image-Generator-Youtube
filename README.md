@@ -6,10 +6,6 @@ A powerful and versatile AI image generation tool built with React and TypeScrip
 - B-Roll: Create professional B-roll footage for video content
 - Icon Sets: Design cohesive icon sets with various styles and themes
 
-## ⚠️ Educational Project Disclaimer
-
-This project is created for educational purposes and built with the assistance of AI technology. It serves as a learning resource and demonstration of modern web development techniques and AI integration. While functional, it should be used primarily for learning and experimentation.
-
 ## 📺 DIY SmartCode YouTube Channel
 
 This project is part of the educational content created for the DIY SmartCode YouTube channel. For more tutorials, projects, and tech content:
@@ -54,8 +50,8 @@ By supporting the channel, you help create more educational content and open-sou
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd ai-image-generator
+git clone https://github.com/leex279/AI-Image-Generator-Youtube.git
+cd AI-Image-Generator-Youtube
 ```
 
 2. Install dependencies:
@@ -66,8 +62,6 @@ npm install
 3. Create a `.env` file in the root directory with the following variables:
 ```env
 VITE_OPENAI_API_ENDPOINT=https://api.openai.com/v1/images/generations
-VITE_USE_WEBHOOK=false
-VITE_WEBHOOK_URL=your-webhook-url
 ```
 
 4. Start the development server:
@@ -78,29 +72,10 @@ npm run dev
 ## Configuration
 
 ### OpenAI API
-By default, the application uses the OpenAI API directly. You'll need to:
+You'll need to:
 1. Create an OpenAI account
 2. Get an API key from the OpenAI dashboard
 3. Add your API key in the application settings
-
-### Webhook Mode
-Alternatively, you can use a custom webhook:
-1. Set `VITE_USE_WEBHOOK=true` in `.env`
-2. Set `VITE_WEBHOOK_URL` to your webhook endpoint
-3. Ensure your webhook handles the following request format:
-```json
-{
-  "type": "tradingcard|broll|iconset",
-  "parameters": {
-    // Generator-specific parameters
-  },
-  "colorsString": "color1 to color2",
-  "openai_image_model": "gpt-image-1",
-  "number_of_images": 1,
-  "size_of_image": "1024x1024",
-  "quality_of_image": "high"
-}
-```
 
 ## Technology Stack
 
@@ -139,7 +114,6 @@ If you find this project helpful, consider:
 1. Subscribing to [DIY SmartCode](https://www.youtube.com/@DIYSmartCode) for more content
 2. Supporting the channel via [Buy Me a Coffee](https://buymeacoffee.com/diy_smartcode)
 3. Sharing the project with others
-
 
 ## License
 
