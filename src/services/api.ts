@@ -1,7 +1,5 @@
 import { CardParameters, BRollParameters, IconSetParameters } from '../types';
 
-const USE_WEBHOOK = import.meta.env.VITE_USE_WEBHOOK === 'true';
-const WEBHOOK_URL = import.meta.env.VITE_WEBHOOK_URL;
 const OPENAI_API_ENDPOINT = import.meta.env.VITE_OPENAI_API_ENDPOINT;
 
 export async function generateImage(
@@ -9,7 +7,10 @@ export async function generateImage(
   parameters: CardParameters
 ): Promise<string> {
   try {
-    if (USE_WEBHOOK) {
+    const useWebhook = localStorage.getItem('use_webhook') === 'true';
+    const webhookUrl = localStorage.getItem('webhook_url');
+
+    if (useWebhook) {
       return await generateImageViaWebhook('tradingcard', parameters);
     } else {
       return await generateImageViaOpenAI(apiKey, buildPrompt(parameters));
@@ -28,7 +29,10 @@ export async function generateBRollImage(
   parameters: BRollParameters
 ): Promise<string> {
   try {
-    if (USE_WEBHOOK) {
+    const useWebhook = localStorage.getItem('use_webhook') === 'true';
+    const webhookUrl = localStorage.getItem('webhook_url');
+
+    if (useWebhook) {
       return await generateImageViaWebhook('broll', parameters);
     } else {
       return await generateImageViaOpenAI(apiKey, buildBRollPrompt(parameters));
@@ -47,7 +51,10 @@ export async function generateIconSetImage(
   parameters: IconSetParameters
 ): Promise<string> {
   try {
-    if (USE_WEBHOOK) {
+    const useWebhook = localStorage.getItem('use_webhook') === 'true';
+    const webhookUrl = localStorage.getItem('webhook_url');
+
+    if (useWebhook) {
       return await generateImageViaWebhook('iconset', parameters);
     } else {
       return await generateImageViaOpenAI(apiKey, buildIconSetPrompt(parameters));
@@ -62,8 +69,10 @@ export async function generateIconSetImage(
 }
 
 async function generateImageViaWebhook(type: string, parameters: any): Promise<string> {
-  if (!WEBHOOK_URL) {
-    throw new Error('Webhook URL not configured. Please check your environment variables.');
+  const webhookUrl = localStorage.getItem('webhook_url');
+  
+  if (!webhookUrl) {
+    throw new Error('Webhook URL not configured. Please check your settings.');
   }
 
   const colorsString = Array.isArray(parameters.colors) 
@@ -72,7 +81,7 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
 
   try {
     // First, send a preflight request
-    const preflightResponse = await fetch(WEBHOOK_URL, {
+    const preflightResponse = await fetch(webhookUrl, {
       method: 'OPTIONS',
       headers: {
         'Origin': window.location.origin,
@@ -88,7 +97,7 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
     }
 
     // Then send the actual request
-    const response = await fetch(WEBHOOK_URL, {
+    const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -5,6 +5,10 @@ import { generateImage, generateBRollImage, generateIconSetImage } from '../serv
 interface AppContextType {
   apiKey: string;
   setApiKey: (key: string) => void;
+  useWebhook: boolean;
+  setUseWebhook: (use: boolean) => void;
+  webhookUrl: string;
+  setWebhookUrl: (url: string) => void;
   activeGenerator: GeneratorType;
   setActiveGenerator: (generator: GeneratorType) => void;
   
@@ -62,12 +66,20 @@ const defaultIconSetParameters: IconSetParameters = {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const USE_WEBHOOK = import.meta.env.VITE_USE_WEBHOOK === 'true';
-
 export function AppProvider({ children }: { children: ReactNode }) {
   const [apiKey, setApiKey] = useState<string>(() => {
     const savedKey = localStorage.getItem('openai_api_key');
     return savedKey || '';
+  });
+  
+  const [useWebhook, setUseWebhook] = useState<boolean>(() => {
+    const savedUseWebhook = localStorage.getItem('use_webhook');
+    return savedUseWebhook ? JSON.parse(savedUseWebhook) : import.meta.env.VITE_USE_WEBHOOK === 'true';
+  });
+  
+  const [webhookUrl, setWebhookUrl] = useState<string>(() => {
+    const savedWebhookUrl = localStorage.getItem('webhook_url');
+    return savedWebhookUrl || import.meta.env.VITE_WEBHOOK_URL || '';
   });
   
   const [activeGenerator, setActiveGenerator] = useState<GeneratorType>('trading-card');
@@ -92,8 +104,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateCardImage = async () => {
-    if (!USE_WEBHOOK && !apiKey) {
+    if (!useWebhook && !apiKey) {
       setError('Please set your OpenAI API key in settings');
+      return;
+    }
+
+    if (useWebhook && !webhookUrl) {
+      setError('Please configure your webhook URL in settings');
       return;
     }
 
@@ -122,8 +139,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateBRollImageHandler = async () => {
-    if (!USE_WEBHOOK && !apiKey) {
+    if (!useWebhook && !apiKey) {
       setError('Please set your OpenAI API key in settings');
+      return;
+    }
+
+    if (useWebhook && !webhookUrl) {
+      setError('Please configure your webhook URL in settings');
       return;
     }
 
@@ -152,8 +174,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   
   const generateIconSetImageHandler = async () => {
-    if (!USE_WEBHOOK && !apiKey) {
+    if (!useWebhook && !apiKey) {
       setError('Please set your OpenAI API key in settings');
+      return;
+    }
+
+    if (useWebhook && !webhookUrl) {
+      setError('Please configure your webhook URL in settings');
       return;
     }
 
@@ -188,6 +215,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [apiKey]);
 
   React.useEffect(() => {
+    localStorage.setItem('use_webhook', JSON.stringify(useWebhook));
+  }, [useWebhook]);
+
+  React.useEffect(() => {
+    if (webhookUrl) {
+      localStorage.setItem('webhook_url', webhookUrl);
+    }
+  }, [webhookUrl]);
+
+  React.useEffect(() => {
     setGeneratedImage(null);
     setError(null);
   }, [activeGenerator]);
@@ -195,6 +232,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = {
     apiKey,
     setApiKey,
+    useWebhook,
+    setUseWebhook,
+    webhookUrl,
+    setWebhookUrl,
     activeGenerator,
     setActiveGenerator,
     cardParameters,
