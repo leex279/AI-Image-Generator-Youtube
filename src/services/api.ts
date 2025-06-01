@@ -79,69 +79,99 @@ async function generateImageViaWebhook(type: string, parameters: any): Promise<s
     ? parameters.colors.join(' to ') 
     : 'blue to purple';
 
+  const requestData = {
+    type,
+    parameters,
+    colorsString,
+    openai_image_model: "gpt-image-1",
+    number_of_images: 1,
+    size_of_image: "1024x1024",
+    quality_of_image: "high"
+  };
+
+  console.log('Webhook request:', {
+    url: webhookUrl,
+    data: requestData
+  });
+
   try {
-    // First, send a preflight request
-    const preflightResponse = await fetch(webhookUrl, {
-      method: 'OPTIONS',
-      headers: {
-        'Origin': window.location.origin,
-        'Access-Control-Request-Method': 'POST',
-        'Access-Control-Request-Headers': 'Content-Type',
-      },
-      mode: 'cors',
-      credentials: 'include',
-    });
-
-    if (!preflightResponse.ok) {
-      console.warn('Preflight request failed:', preflightResponse.status);
-    }
-
-    // Then send the actual request
     const response = await fetch(webhookUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
-        'Origin': window.location.origin,
       },
-      mode: 'cors',
-      credentials: 'include',
-      body: JSON.stringify({
-        type,
-        parameters,
-        colorsString,
-        openai_image_model: "gpt-image-1",
-        number_of_images: 1,
-        size_of_image: "1024x1024",
-        quality_of_image: "high"
-      }),
+      body: JSON.stringify(requestData),
     });
 
+    console.log('Webhook response status:', response.status);
+    console.log('Webhook response headers:', Object.fromEntries(response.headers.entries()));
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
+      const errorText = await response.text();
+      console.error('Webhook error response:', errorText);
+      
+      let errorData;
+      try {
+        errorData = JSON.parse(errorText);
+      } catch (e) {
+        console.warn('Failed to parse error response as JSON:', e);
+      }
+
       throw new Error(
-        errorData.error?.message || 
+        errorData?.error?.message || 
         `Failed to generate image: ${response.status} ${response.statusText}`
       );
     }
 
-    const data = await response.json();
+    const contentType = response.headers.get('content-type');
+    console.log('Response content type:', contentType);
+
+    let data;
+    if (contentType?.includes('application/json')) {
+      data = await response.json();
+      console.log('Webhook response data:', data);
+    } else {
+      const text = await response.text();
+      console.log('Webhook response text:', text);
+      try {
+        data = JSON.parse(text);
+        console.log('Parsed non-JSON response:', data);
+      } catch (e) {
+        console.error('Failed to parse response as JSON:', e);
+        throw new Error('Invalid response format from webhook');
+      }
+    }
     
-    if (!data || (!data[0]?.b64_json && !data.url)) {
-      throw new Error('No image data found in webhook response');
+    if (!data) {
+      throw new Error('Empty response from webhook');
     }
 
-    // Handle base64 response
-    if (data[0]?.b64_json) {
-      return `data:image/png;base64,${data[0].b64_json}`;
+    // Check for different response formats
+    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+      if (data.data[0].url) {
+        return data.data[0].url;
+      } else if (data.data[0].b64_json) {
+        return `data:image/png;base64,${data.data[0].b64_json}`;
+      }
+    } else if (data.url) {
+      return data.url;
+    } else if (data.b64_json) {
+      return `data:image/png;base64,${data.b64_json}`;
+    } else if (Array.isArray(data) && data.length > 0) {
+      if (data[0].url) {
+        return data[0].url;
+      } else if (data[0].b64_json) {
+        return `data:image/png;base64,${data[0].b64_json}`;
+      }
     }
 
-    // Handle URL response
-    return data.url;
+    console.error('Unexpected webhook response format:', data);
+    throw new Error('No image data found in webhook response');
   } catch (error) {
     console.error('Webhook error:', error);
     if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      throw new Error('Network Error: Unable to connect to the webhook. Please check your internet connection and CORS configuration.');
+      throw new Error('Network Error: Unable to connect to the webhook. Please check your internet connection.');
     }
     throw error;
   }
