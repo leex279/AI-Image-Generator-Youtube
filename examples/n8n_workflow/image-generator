@@ -1,0 +1,462 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "toBinary",
+        "sourceProperty": "b64_json",
+        "options": {}
+      },
+      "id": "93dc3b24-5197-4cfd-9c11-163088ae00da",
+      "name": "Convert to File",
+      "type": "n8n-nodes-base.convertToFile",
+      "position": [
+        1060,
+        1100
+      ],
+      "typeVersion": 1.1
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/images/generations",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "={{ $json.openai_image_model }}"
+            },
+            {
+              "name": "prompt",
+              "value": "={{ $json.image_prompt }}"
+            },
+            {
+              "name": "n",
+              "value": "={{ $json.number_of_images }}"
+            },
+            {
+              "name": "quality",
+              "value": "={{ $json.quality_of_image }}"
+            },
+            {
+              "name": "size",
+              "value": "={{ $json.size_of_image }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "09c23e3e-0628-4537-a8c1-7175dfbae8da",
+      "name": "OpenAI - Generate Image",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        620,
+        1020
+      ],
+      "typeVersion": 4.2,
+      "credentials": {
+        "openAiApi": {
+          "id": "YyBslmwqkT89x8h6",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c41a8091-d952-4f5a-ae24-3b0691bbce57",
+              "name": "number_of_images",
+              "type": "number",
+              "value": 1
+            },
+            {
+              "id": "00feec5a-19c8-43af-bf93-e0729d1391f8",
+              "name": "quality_of_image",
+              "type": "string",
+              "value": "high"
+            },
+            {
+              "id": "1b359a11-c05a-49c8-aa27-402b145fcbc1",
+              "name": "size_of_image",
+              "type": "string",
+              "value": "1024x1024"
+            },
+            {
+              "id": "6cf4ba85-d11a-48bb-9eaf-4084c9538d87",
+              "name": "openai_image_model",
+              "type": "string",
+              "value": "=gpt-image-1"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "8ace830e-b6e0-4b53-be1a-886d4210166d",
+      "name": "Set Variables",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        360,
+        1020
+      ],
+      "typeVersion": 3.4
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "data",
+        "options": {}
+      },
+      "id": "0908f21a-e07e-4f58-8cdd-ee1151b62ce1",
+      "name": "Separate Image Outputs",
+      "type": "n8n-nodes-base.splitOut",
+      "position": [
+        880,
+        1020
+      ],
+      "typeVersion": 1
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "0ee780f3-00a5-4fe0-8464-fb9c58f72993",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        1020
+      ],
+      "id": "f139a757-d486-48ee-b92d-1784dd804a0e",
+      "name": "Webhook",
+      "webhookId": "0ee780f3-00a5-4fe0-8464-fb9c58f72993"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "9c3c64e4-123c-441c-9eb5-2284128fe236",
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "iconset",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.type }}",
+                    "rightValue": "tradingcard",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "49d22d09-b61f-4674-9de3-865bf8e72ac7"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -160,
+        1020
+      ],
+      "id": "70e31f3e-8529-4b8c-bf5b-c4d2691d6ce6",
+      "name": "Switch",
+      "alwaysOutputData": false
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8af994f3-6b9f-4964-bec7-919381b6ef89",
+              "name": "image_prompt",
+              "value": "=Create a cohesive and visually stunning set of icons within a single image, laid out in a grid. The icons should be for: {{ $json.body.parameters.icons }}. All icons should be consistent in form, lighting, and design, optimized for {{ $json.body.parameters.use_case }}. Each icon should be centered within its grid cell, clean, and easy to recognize at a glance. The overall icon design style is {{ $json.body.parameters.style }}. Apply the chosen aesthetic consistently across all icons. Icons should feature smooth edges, scalable design logic, and depth or lighting consistent with the style. The icons should appear premium and modern, fitting seamlessly into high-end UI/UX environments. Color palette is based on {{ $json.body.parameters.color_scheme }}. Use accent colors sparingly but effectively, ensuring high readability and visual balance. For each icon:  The name of the icon should be displayed underneath it  Each icon should be clearly separated from others in the grid layout  All icons should follow these guidelines:  Be centered and clean with adequate spacing  Match the chosen theme and color scheme  Have no background or a soft ambient glow depending on style  Feature lighting and shadows that add subtle depth (if style allows)  Include the following custom instructions from the user: {{ $json.body.parameters.custom_instructions }} \nCreate this as a single image showing all icons in a grid layout. The entire image should feel cohesive, modern, and professional—suitable for futuristic interfaces or themed UI sets.",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        960
+      ],
+      "id": "94c944b0-818a-41c1-99b8-a73a73682945",
+      "name": "IconSet"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "8af994f3-6b9f-4964-bec7-919381b6ef89",
+              "name": "image_prompt",
+              "value": "=`A futuristic trading card with a dark, moody neon aesthetic and soft sci-fi lighting. The card features a semi-transparent, rounded rectangle with slightly muted glowing edges, appearing as if made of holographic glass. The surface has subtle reflections and a faint gloss, with light motion blur applied to edges and highlights to create a sense of energy and depth. At the center is a large glowing logo of {{ $json.body.parameters.logo }}, rendered with a smooth gradient of {{ $json.body.colorsString }} — visibly radiant but not overpoweringly bright. The background is composed of a dark carbon fiber texture or a deep gradient (e.g., graphite black to indigo), with soft ambient glows bleeding into the card edges. Subtle diagonal light rays stream downward from the top, giving the entire scene a cinematic glow.  Below the card, a realistic reflective floor mirrors the neon edges and central logo with a slightly diffused effect, grounding the card in a futuristic space.  Text elements are minimal, premium, and softly lit:  Top-left: '{{ $json.body.parameters.ticker }}'  Top-right: {{ $json.body.parameters.signature }} ? `a stylized signature '{{ $json.body.parameters.signature }}'` : 'a digital glyph'}  Bottom: '{{ $json.body.parameters.company_name }}' along with serial number '{{ $json.body.parameters.card_number }}', a revenue badge displaying '{{ $json.body.parameters.revenue }}', and the year '{{ $json.body.parameters.year }}'  Typography is elegant, with a faint glow and soft blur—evoking a high-end cyberpunk collectible. Include floating particles, faint scanlines, and a subtle holographic watermark to enhance the sci-fi premium vibe.`",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        100,
+        1120
+      ],
+      "id": "ce84812b-d48f-486a-9219-2b58f3371626",
+      "name": "Tradingcard"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1060,
+        920
+      ],
+      "id": "0e3a1e47-1118-42eb-8d18-e1799875d7bf",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "content": "## Config AI Params\n- Number of Images\n- Quality\n- Size\n- Image Model\n",
+        "height": 460,
+        "width": 220,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        300,
+        840
+      ],
+      "id": "ffed5ec2-e32d-4658-94f6-36c7215cab78",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Image Prompts\nEvery node represents another type of image.",
+        "height": 460,
+        "width": 220,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        40,
+        840
+      ],
+      "id": "995b3382-4fbd-4436-8172-ae6da444bd6b",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## LLM Request (OpenAI)\n",
+        "height": 460,
+        "width": 220,
+        "color": 2
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        560,
+        840
+      ],
+      "id": "7c29b64e-b802-445b-964d-c0aecb6143b3",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Output\n1. Response Webhook (external)\n2. Image File (n8n)\n",
+        "height": 460,
+        "width": 440,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        820,
+        840
+      ],
+      "id": "817767c8-b8a3-40ee-811c-2ff51d56266b",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "content": "## Recognize Type (Switch)\nRoute based on the type which image prompt to use next.",
+        "height": 460,
+        "width": 220,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        840
+      ],
+      "id": "158541b5-ac4a-4b06-a9f5-a8bf4a8d8296",
+      "name": "Sticky Note4"
+    },
+    {
+      "parameters": {
+        "content": "## General\nYouTube Video: \nRelated GitHub Project (Webapp): \n![AI Image Generator Preview](https://raw.githubusercontent.com/leex279/AI-Image-Generator-Youtube/main/public/ai-image-generator.png)\n",
+        "height": 580,
+        "width": 1000
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -220,
+        1340
+      ],
+      "id": "0b06d9e7-0c35-4c56-beb7-d8bf40ba51b8",
+      "name": "Sticky Note5"
+    }
+  ],
+  "connections": {
+    "OpenAI - Generate Image": {
+      "main": [
+        [
+          {
+            "node": "Separate Image Outputs",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Variables": {
+      "main": [
+        [
+          {
+            "node": "OpenAI - Generate Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Separate Image Outputs": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "IconSet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Tradingcard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IconSet": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tradingcard": {
+      "main": [
+        [
+          {
+            "node": "Set Variables",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "meta": {
+    "instanceId": "558d88703fb65b2d0e44613bc35916258b0f0bf983c5d4730c00c424b77ca36a"
+  }
+}
