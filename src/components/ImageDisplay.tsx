@@ -19,12 +19,33 @@ function ImageDisplay() {
 
   const handleDownload = () => {
     if (generatedImage) {
-      const link = document.createElement('a');
-      link.href = generatedImage;
-      link.download = `${activeGenerator}-${Date.now()}.png`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // For base64 images, we need to handle them differently
+      if (generatedImage.startsWith('data:image')) {
+        // Create a temporary link element
+        const link = document.createElement('a');
+        link.href = generatedImage;
+        link.download = `${activeGenerator}-${Date.now()}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        // For regular URLs, fetch the image first
+        fetch(generatedImage)
+          .then(response => response.blob())
+          .then(blob => {
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${activeGenerator}-${Date.now()}.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+          })
+          .catch(error => {
+            console.error('Error downloading image:', error);
+          });
+      }
     }
   };
 
@@ -118,7 +139,7 @@ function ImageDisplay() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="absolute inset-0 flex flex-col items-center justify-center bg-surface-950/80 backdrop-blur-sm text-center"
+                className="absolute inset-0 flex flex-col items-center justify-center bg-surface-950/80 backdrop-blur-sm text-center p-6"
               >
                 <AlertCircle className="h-12 w-12 text-error-500 mb-4" />
                 <h3 className="text-lg font-medium text-error-400 mb-2">Generation Failed</h3>
@@ -142,7 +163,12 @@ function ImageDisplay() {
                 <img 
                   src={generatedImage} 
                   alt={`Generated ${activeGenerator}`} 
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain bg-surface-950"
+                  onError={(e) => {
+                    console.error('Image failed to load:', e);
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>';
+                  }}
                 />
                 <motion.button
                   className="absolute bottom-4 right-4 bg-surface-900/80 backdrop-blur-sm p-2 rounded-full text-primary-400 hover:text-primary-300 transition-colors"
@@ -188,13 +214,13 @@ function ImageDisplay() {
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
-                className="aspect-square rounded-md overflow-hidden relative group cursor-pointer"
+                className="aspect-square rounded-md overflow-hidden relative group cursor-pointer bg-surface-950"
                 onClick={() => window.open(item.imageUrl, '_blank')}
               >
                 <img 
                   src={item.imageUrl} 
                   alt={getAltText(item.type, item.params)}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-surface-950/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end justify-center p-2">
                   <p className="text-xs text-center truncate w-full">

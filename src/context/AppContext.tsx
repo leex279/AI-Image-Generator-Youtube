@@ -5,6 +5,10 @@ import { generateImage, generateBRollImage, generateIconSetImage } from '../serv
 interface AppContextType {
   apiKey: string;
   setApiKey: (key: string) => void;
+  useWebhook: boolean;
+  setUseWebhook: (use: boolean) => void;
+  webhookUrl: string;
+  setWebhookUrl: (url: string) => void;
   activeGenerator: GeneratorType;
   setActiveGenerator: (generator: GeneratorType) => void;
   
@@ -68,6 +72,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return savedKey || '';
   });
   
+  const [useWebhook, setUseWebhook] = useState<boolean>(() => {
+    const savedUseWebhook = localStorage.getItem('use_webhook');
+    return savedUseWebhook ? JSON.parse(savedUseWebhook) : import.meta.env.VITE_USE_WEBHOOK === 'true';
+  });
+  
+  const [webhookUrl, setWebhookUrl] = useState<string>(() => {
+    const savedWebhookUrl = localStorage.getItem('webhook_url');
+    return savedWebhookUrl || import.meta.env.VITE_WEBHOOK_URL || '';
+  });
+  
   const [activeGenerator, setActiveGenerator] = useState<GeneratorType>('trading-card');
   const [cardParameters, setCardParameters] = useState<CardParameters>(defaultCardParameters);
   const [bRollParameters, setBRollParameters] = useState<BRollParameters>(defaultBRollParameters);
@@ -90,8 +104,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateCardImage = async () => {
-    if (!apiKey) {
+    if (!useWebhook && !apiKey) {
       setError('Please set your OpenAI API key in settings');
+      return;
+    }
+
+    if (useWebhook && !webhookUrl) {
+      setError('Please configure your webhook URL in settings');
       return;
     }
 
@@ -102,7 +121,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const imageUrl = await generateImage(apiKey, cardParameters);
       setGeneratedImage(imageUrl);
       
-      // Add to history
       setGenerationHistory(prev => [
         {
           type: 'trading-card',
@@ -110,7 +128,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           imageUrl,
           timestamp: Date.now(),
         },
-        ...prev.slice(0, 9), // Keep only the last 10 items
+        ...prev.slice(0, 9),
       ]);
       
     } catch (err) {
@@ -121,8 +139,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   const generateBRollImageHandler = async () => {
-    if (!apiKey) {
+    if (!useWebhook && !apiKey) {
       setError('Please set your OpenAI API key in settings');
+      return;
+    }
+
+    if (useWebhook && !webhookUrl) {
+      setError('Please configure your webhook URL in settings');
       return;
     }
 
@@ -133,7 +156,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const imageUrl = await generateBRollImage(apiKey, bRollParameters);
       setGeneratedImage(imageUrl);
       
-      // Add to history
       setGenerationHistory(prev => [
         {
           type: 'b-roll',
@@ -141,7 +163,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           imageUrl,
           timestamp: Date.now(),
         },
-        ...prev.slice(0, 9), // Keep only the last 10 items
+        ...prev.slice(0, 9),
       ]);
       
     } catch (err) {
@@ -152,8 +174,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   
   const generateIconSetImageHandler = async () => {
-    if (!apiKey) {
+    if (!useWebhook && !apiKey) {
       setError('Please set your OpenAI API key in settings');
+      return;
+    }
+
+    if (useWebhook && !webhookUrl) {
+      setError('Please configure your webhook URL in settings');
       return;
     }
 
@@ -164,7 +191,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const imageUrl = await generateIconSetImage(apiKey, iconSetParameters);
       setGeneratedImage(imageUrl);
       
-      // Add to history
       setGenerationHistory(prev => [
         {
           type: 'icon-set',
@@ -172,7 +198,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           imageUrl,
           timestamp: Date.now(),
         },
-        ...prev.slice(0, 9), // Keep only the last 10 items
+        ...prev.slice(0, 9),
       ]);
       
     } catch (err) {
@@ -182,14 +208,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Save API key to localStorage when it changes
   React.useEffect(() => {
     if (apiKey) {
       localStorage.setItem('openai_api_key', apiKey);
     }
   }, [apiKey]);
 
-  // Reset generated image when switching generators
+  React.useEffect(() => {
+    localStorage.setItem('use_webhook', JSON.stringify(useWebhook));
+  }, [useWebhook]);
+
+  React.useEffect(() => {
+    if (webhookUrl) {
+      localStorage.setItem('webhook_url', webhookUrl);
+    }
+  }, [webhookUrl]);
+
   React.useEffect(() => {
     setGeneratedImage(null);
     setError(null);
@@ -198,6 +232,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const value = {
     apiKey,
     setApiKey,
+    useWebhook,
+    setUseWebhook,
+    webhookUrl,
+    setWebhookUrl,
     activeGenerator,
     setActiveGenerator,
     cardParameters,
