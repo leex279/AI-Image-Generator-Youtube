@@ -6,6 +6,10 @@ A powerful and versatile AI image generation tool built with React and TypeScrip
 - B-Roll: Create professional B-roll footage for video content
 - Icon Sets: Design cohesive icon sets with various styles and themes
 
+## ⚠️ Educational Project Disclaimer
+
+This project is created for educational purposes and built with the assistance of AI technology. It serves as a learning resource and demonstration of modern web development techniques and AI integration. While functional, it should be used primarily for learning and experimentation.
+
 ## 📺 DIY SmartCode YouTube Channel
 
 This project is part of the educational content created for the DIY SmartCode YouTube channel. For more tutorials, projects, and tech content:
